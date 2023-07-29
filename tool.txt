@@ -1,6 +1,23 @@
-domain=$1
-while read sub;do 
-	if host $sub.$domain &> /dev/null; then
-		echo "$sub.$domain";
-	fi
-done < best-dns-wordlist.txt
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 <domain>"
+  exit 1
+fi
+
+domain="$1"
+wordlist="best-dns-wordlist.txt"
+
+# Function to resolve a subdomain using host command with timeout
+resolve_subdomain() {
+  subdomain="$1"
+  timeout 1 host "$subdomain.$domain" >/dev/null 2>&1
+}
+
+export -f resolve_subdomain
+
+# Parallelize the subdomain resolution
+cat "$wordlist" | parallel -j 8 resolve_subdomain {}
+
+# Filter and display valid subdomains
+cat "$wordlist" | parallel -j 8 resolve_subdomain {} | grep -oE '^\S+'
