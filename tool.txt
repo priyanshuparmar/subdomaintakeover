@@ -11,14 +11,14 @@ wordlist="best-dns-wordlist.txt"
 # Function to resolve a subdomain using host command with timeout
 resolve_subdomain() {
   subdomain="$1"
-  timeout 1 host "$subdomain.$domain" >/dev/null 2>&1
+  if timeout 1 host "$subdomain.$domain" >/dev/null 2>&1; then
+    echo "$subdomain.$domain"
+  fi
 }
 
-export -f resolve_subdomain
-
-# Parallelize the subdomain resolution with 5-second break
-cat "$wordlist" | parallel -j 8 -k "resolve_subdomain {}; sleep 5"
-
-# Filter and display valid subdomains
-cat "$wordlist" | parallel -j 8 -k "resolve_subdomain {}; sleep 5" | grep -oE '^\S+'
+# Read wordlist line by line and resolve subdomains one by one
+while read -r sub; do
+  resolve_subdomain "$sub"
+  sleep 5  # 5-second break between each subdomain resolution
+done < "$wordlist"
 
