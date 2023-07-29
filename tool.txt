@@ -16,8 +16,9 @@ resolve_subdomain() {
 
 export -f resolve_subdomain
 
-# Parallelize the subdomain resolution
-cat "$wordlist" | parallel -j 8 resolve_subdomain {}
+# Parallelize the subdomain resolution with 5-second break
+cat "$wordlist" | parallel -j 8 -k "resolve_subdomain {}; sleep 5"
 
 # Filter and display valid subdomains
-cat "$wordlist" | parallel -j 8 resolve_subdomain {} | grep -oE '^\S+'
+cat "$wordlist" | parallel -j 8 -k "resolve_subdomain {}; sleep 5" | grep -oE '^\S+'
+
